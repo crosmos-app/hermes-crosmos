@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 _API_KEY = os.environ.get("CROSMOS_API_KEY", "")
 _DEFAULT_SPACE_ID = os.environ.get("CROSMOS_SPACE_ID", "")
 
-_turn_ingested = False
+_session_ingested: dict[str, bool] = {}
 
 _INJECTION_PATTERNS = re.compile(
     r"(?i)\b(ignore\s+(previous|above|prior|earlier|all)\s+(instructions?|prompts?|rules?|directions?))|"
@@ -36,9 +36,6 @@ def _recall_for_turn(
     session_id: str, user_message: str, is_first_turn: bool, **kwargs
 ) -> dict | None:
     """pre_llm_call hook: auto-recall relevant context before each LLM turn."""
-    global _turn_ingested
-    _turn_ingested = False
-
     if not _DEFAULT_SPACE_ID or not _API_KEY:
         return None
 
@@ -105,12 +102,10 @@ def _ingest_after_turn(
     session_id: str, user_message: str, assistant_response: str, **kwargs
 ) -> None:
     """post_llm_call hook: auto-ingest conversations after each completed turn."""
-    global _turn_ingested
-
     if not _DEFAULT_SPACE_ID or not _API_KEY:
         return
 
-    if _turn_ingested:
+    if _session_ingested.get(session_id):
         return
 
     if not user_message or not assistant_response:
@@ -148,7 +143,9 @@ def _ingest_after_turn(
             },
         )
         resp.raise_for_status()
-        _turn_ingested = True
+        _session_ingested[session_id] = True
+        if len(_session_ingested) > 1000:
+            _session_ingested.clear()
         logger.debug("crosmos auto-ingest: job %s", resp.json().get("job_id"))
     except Exception as e:
         logger.warning("crosmos auto-ingest failed: %s", e)
