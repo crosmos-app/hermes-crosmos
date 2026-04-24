@@ -15,8 +15,6 @@ logger = logging.getLogger(__name__)
 _API_KEY = os.environ.get("CROSMOS_API_KEY", "")
 _DEFAULT_SPACE_ID = os.environ.get("CROSMOS_SPACE_ID", "")
 
-_session_ingested: dict[str, bool] = {}
-
 _INJECTION_PATTERNS = re.compile(
     r"(?i)\b(ignore\s+(previous|above|prior|earlier|all)\s+(instructions?|prompts?|rules?|directions?))|"
     r"\b(forget\s+(everything|all|previous|above|prior))|"
@@ -105,9 +103,6 @@ def _ingest_after_turn(
     if not _DEFAULT_SPACE_ID or not _API_KEY:
         return
 
-    if _session_ingested.get(session_id):
-        return
-
     if not user_message or not assistant_response:
         return
 
@@ -143,9 +138,6 @@ def _ingest_after_turn(
             },
         )
         resp.raise_for_status()
-        _session_ingested[session_id] = True
-        if len(_session_ingested) > 1000:
-            _session_ingested.clear()
         logger.debug("crosmos auto-ingest: job %s", resp.json().get("job_id"))
     except Exception as e:
         logger.warning("crosmos auto-ingest failed: %s", e)
