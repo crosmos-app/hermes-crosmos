@@ -1,19 +1,22 @@
 """Tool handlers"""
 
 import json
-import httpx
 import os
+
+import httpx
 
 _BASE_URL = os.environ.get("CROSMOS_BASE_URL", "https://api.crosmos.dev/v1")
 _API_KEY = os.environ.get("CROSMOS_API_KEY", "")
 _DEFAULT_SPACE_ID = os.environ.get("CROSMOS_SPACE_ID", "")
 
-
-def _headers():
-    return {
+_client = httpx.Client(
+    base_url=_BASE_URL,
+    headers={
         "Authorization": f"Bearer {_API_KEY}",
         "Content-Type": "application/json",
-    }
+    },
+    timeout=30.0,
+)
 
 
 def crosmos_remember(args: dict, **kwargs) -> str:
@@ -30,14 +33,12 @@ def crosmos_remember(args: dict, **kwargs) -> str:
         )
 
     try:
-        resp = httpx.post(
-            f"{_BASE_URL}/sources",
-            headers=_headers(),
+        resp = _client.post(
+            "/sources",
             json={
                 "space_id": space_id,
                 "sources": [{"content": content, "content_type": "text"}],
             },
-            timeout=30.0,
         )
         resp.raise_for_status()
         data = resp.json()
@@ -72,17 +73,14 @@ def crosmos_recall(args: dict, **kwargs) -> str:
         )
 
     try:
-        body = {
-            "query": query,
-            "space_id": space_id,
-            "limit": limit,
-            "include_source": include_source,
-        }
-        resp = httpx.post(
-            f"{_BASE_URL}/search",
-            headers=_headers(),
-            json=body,
-            timeout=30.0,
+        resp = _client.post(
+            "/search",
+            json={
+                "query": query,
+                "space_id": space_id,
+                "limit": limit,
+                "include_source": include_source,
+            },
         )
         resp.raise_for_status()
         data = resp.json()
@@ -123,11 +121,7 @@ def crosmos_forget(args: dict, **kwargs) -> str:
         return json.dumps({"error": "No memory_id provided"})
 
     try:
-        resp = httpx.delete(
-            f"{_BASE_URL}/memories/{memory_id}",
-            headers=_headers(),
-            timeout=10.0,
-        )
+        resp = _client.delete(f"/memories/{memory_id}")
         if resp.status_code == 404:
             return json.dumps({"error": f"Memory {memory_id} not found"})
         resp.raise_for_status()
@@ -149,12 +143,7 @@ def crosmos_graph_stats(args: dict, **kwargs) -> str:
         )
 
     try:
-        resp = httpx.get(
-            f"{_BASE_URL}/graph/stats",
-            headers=_headers(),
-            params={"space_id": space_id},
-            timeout=10.0,
-        )
+        resp = _client.get("/graph/stats", params={"space_id": space_id})
         resp.raise_for_status()
         return json.dumps(resp.json())
     except httpx.HTTPStatusError as e:
