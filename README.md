@@ -15,7 +15,7 @@ Conversations are automatically extracted into entities and relationships, recal
 Review the script first if you prefer, then run:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/crosmos-ai/crosmos-hermes-plugin/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/crosmos-app/hermes-crosmos/main/install.sh | bash
 ```
 
 This single command:
@@ -32,7 +32,7 @@ Start a new Hermes session — Crosmos is active immediately.
 
 ```bash
 # 1. Install the plugin
-hermes plugins install crosmos-ai/crosmos-hermes-plugin
+hermes plugins install crosmos-app/hermes-crosmos
 
 # 2. Set credentials
 export CROSMOS_API_KEY=csk_your_key_here
