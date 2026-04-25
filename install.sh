@@ -81,7 +81,7 @@ HERMES_HOME="$HERMES_HOME" hermes plugins install "crosmos-app/$PLUGIN_DIR_NAME"
   # Fallback: clone manually
   if [ ! -d "$PLUGIN_DIR" ]; then
     info "cloning plugin manually"
-    git clone "https://github.com/crosmos-app/$PLUGIN_DIR_NAME.git" "$PLUGIN_DIR" 2>/dev/null ||
+    git clone "https://github.com/crosmos-labs/$PLUGIN_DIR_NAME.git" "$PLUGIN_DIR" 2>/dev/null ||
       fail "unable to install plugin; check network or install manually"
   fi
 }

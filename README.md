@@ -14,7 +14,7 @@ Persistent memory layer for Hermes Agent, powered by Crosmos.
 Review the script first if you prefer, then run:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/crosmos-app/hermes-crosmos/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/crosmos-labs/hermes-crosmos/main/install.sh | bash
 ```
 
 This single command:
@@ -31,7 +31,7 @@ Start a new Hermes session — Crosmos is active immediately.
 
 ```bash
 # 1. Install the plugin
-hermes plugins install crosmos-app/hermes-crosmos
+hermes plugins install crosmos-labs/hermes-crosmos
 
 # 2. Set credentials
 export CROSMOS_API_KEY=csk_your_key_here
