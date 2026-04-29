@@ -112,7 +112,9 @@ if [ -z "$CROSMOS_API_KEY" ]; then
   info "Crosmos API key not found"
   info "Get one at: https://console.crosmos.dev"
   printf 'CROSMOS_API_KEY: '
-  read -r CROSMOS_API_KEY
+  if ! read -r CROSMOS_API_KEY < /dev/tty 2>/dev/null; then
+    fail "Could not read from terminal. Set CROSMOS_API_KEY env var and re-run."
+  fi
   [ -z "$CROSMOS_API_KEY" ] && fail "API key is required"
 fi
 
