@@ -96,24 +96,8 @@ have_cmd hermes || fail "hermes command is required; install Hermes first"
 have_cmd curl || fail "curl is required for API calls"
 have_cmd python3 || fail "python3 is required"
 
-# install
-info "installing $PLUGIN_DIR_NAME via hermes plugins install"
-HERMES_HOME="$HERMES_HOME" hermes plugins install "crosmos-app/$PLUGIN_DIR_NAME" 2>/dev/null || {
-  # Fallback: clone manually
-  if [ ! -d "$PLUGIN_DIR" ]; then
-    info "cloning plugin manually"
-    git clone "https://github.com/crosmos-app/$PLUGIN_DIR_NAME.git" "$PLUGIN_DIR" 2>/dev/null ||
-      fail "unable to install plugin; check network or install manually"
-  fi
-}
-
-[ -f "$PLUGIN_DIR/__init__.py" ] || fail "installed plugin is missing __init__.py"
-[ -f "$PLUGIN_DIR/plugin.yaml" ] || fail "installed plugin is missing plugin.yaml"
-
-info "plugin installed at $PLUGIN_DIR"
-
-# config — always overwrite saved base URL with the current default
-# (only honor an explicit CROSMOS_BASE_URL passed in the environment)
+# config — resolve all values BEFORE installing the plugin, so the .env
+# file is populated before any Python import reads it.
 CROSMOS_BASE_URL="${CROSMOS_BASE_URL:-$DEFAULT_BASE_URL}"
 
 existing_key="$(read_env_value "CROSMOS_API_KEY" "$HERMES_ENV_FILE")"
@@ -138,6 +122,29 @@ success "saved CROSMOS_API_KEY to $HERMES_ENV_FILE"
 upsert_env_value "CROSMOS_BASE_URL" "$CROSMOS_BASE_URL" "$HERMES_ENV_FILE"
 success "saved CROSMOS_BASE_URL to $HERMES_ENV_FILE"
 
+# resolve space name before install as well
+existing_space_name="$(read_env_value "CROSMOS_SPACE_NAME" "$HERMES_ENV_FILE")"
+CROSMOS_SPACE_NAME="${CROSMOS_SPACE_NAME:-${existing_space_name:-hermes-agent}}"
+
+upsert_env_value "CROSMOS_SPACE_NAME" "$CROSMOS_SPACE_NAME" "$HERMES_ENV_FILE"
+success "saved CROSMOS_SPACE_NAME to $HERMES_ENV_FILE"
+
+# install — runs AFTER config is written so plugin imports pick up .env values
+info "installing $PLUGIN_DIR_NAME via hermes plugins install"
+HERMES_HOME="$HERMES_HOME" hermes plugins install "crosmos-app/$PLUGIN_DIR_NAME" 2>/dev/null || {
+  # Fallback: clone manually
+  if [ ! -d "$PLUGIN_DIR" ]; then
+    info "cloning plugin manually"
+    git clone "https://github.com/crosmos-app/$PLUGIN_DIR_NAME.git" "$PLUGIN_DIR" 2>/dev/null ||
+      fail "unable to install plugin; check network or install manually"
+  fi
+}
+
+[ -f "$PLUGIN_DIR/__init__.py" ] || fail "installed plugin is missing __init__.py"
+[ -f "$PLUGIN_DIR/plugin.yaml" ] || fail "installed plugin is missing plugin.yaml"
+
+info "plugin installed at $PLUGIN_DIR"
+
 # verification
 info "verifying Crosmos API connectivity at $CROSMOS_BASE_URL"
 if verify_api_key "$CROSMOS_API_KEY" "$CROSMOS_BASE_URL"; then
@@ -147,17 +154,12 @@ else
   warn "the plugin will be installed but may not function until connectivity is fixed"
 fi
 
-# default space (referenced by name; UUID is resolved at runtime)
-existing_space_name="$(read_env_value "CROSMOS_SPACE_NAME" "$HERMES_ENV_FILE")"
-CROSMOS_SPACE_NAME="${CROSMOS_SPACE_NAME:-${existing_space_name:-hermes-agent}}"
-
+# create space (now that we have API key + base URL verified)
 info "ensuring memory space '$CROSMOS_SPACE_NAME' exists"
 org_uuid="$(get_first_org_id "$CROSMOS_API_KEY" "$CROSMOS_BASE_URL")"
 if [ -z "$org_uuid" ]; then
   warn "could not resolve org for the API key; space creation skipped"
 else
-  # create_space is idempotent for our purposes: if it already exists the API
-  # returns an error and the call is a no-op.
   created_id="$(create_space "$CROSMOS_API_KEY" "$CROSMOS_BASE_URL" "$CROSMOS_SPACE_NAME" "$org_uuid")"
   if [ -n "$created_id" ]; then
     success "created memory space '$CROSMOS_SPACE_NAME'"
@@ -165,8 +167,6 @@ else
     info "space '$CROSMOS_SPACE_NAME' already exists or could not be created (continuing)"
   fi
 fi
-upsert_env_value "CROSMOS_SPACE_NAME" "$CROSMOS_SPACE_NAME" "$HERMES_ENV_FILE"
-success "saved CROSMOS_SPACE_NAME to $HERMES_ENV_FILE"
 
 # config json
 python3 - "$CROSMOS_CONFIG_FILE" "$CROSMOS_BASE_URL" "$CROSMOS_SPACE_NAME" <<'PY'
