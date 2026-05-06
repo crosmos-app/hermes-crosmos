@@ -1,18 +1,9 @@
 name: crosmos
 version: 1.0.0
-description: Crosmos Memory — persistent memory layer for Hermes agents. Auto-ingests conversations and recalls context.
-author: Crosmos
-requires_env:
-  - name: CROSMOS_API_KEY
-    description: "API key for the Crosmos Memory engine"
-    secret: true
-  - name: CROSMOS_BASE_URL
-    description: "Base URL for the Crosmos API (default: https://api.crosmos.dev/api/v1)"
-provides_tools:
-  - crosmos_remember
-  - crosmos_recall
-  - crosmos_forget
-  - crosmos_graph_stats
-provides_hooks:
-  - pre_llm_call
-  - post_llm_call
+description: "Crosmos memory provider — persistent memory for Hermes agents with auto-recall and auto-ingest."
+hooks:
+  - prefetch
+  - sync_turn
+  - on_session_end
+pip_dependencies:
+  - httpx
