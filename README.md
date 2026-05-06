@@ -58,9 +58,9 @@ You should see `crosmos` listed as the active memory provider.
 
 ## How It Works
 
-- **Auto-recall** — Before each LLM turn, relevant context is searched and injected into the conversation
-- **Auto-ingest** — After each turn, the user/assistant exchange is ingested into the knowledge graph
-- **Manual tools** — `crosmos_remember`, `crosmos_recall`, `crosmos_forget`, `crosmos_graph_stats` available for explicit control
+- **Auto-recall** — relevant context is searched and injected, fenced in a `<crosmos-context>` block so the model treats it as background data, not user input
+- **Auto-ingest** — conversations are ingested into Crosmos for future recall (own context blocks are stripped to avoid feedback loops)
+- **Manual tools** — `crosmos_remember`, `crosmos_recall`, `crosmos_forget` available for explicit control
 
 No "remember this" or "search for X" needed. It just works.
 
@@ -68,10 +68,9 @@ No "remember this" or "search for X" needed. It just works.
 
 | Tool | Description |
 |------|-------------|
-| `crosmos_remember` | Store a fact or conversation into the knowledge graph |
+| `crosmos_remember` | Store a fact or note into the active memory space |
 | `crosmos_recall` | Search memories by natural language query |
 | `crosmos_forget` | Soft-delete a memory by ID |
-| `crosmos_graph_stats` | Show entity/edge counts and top relation types |
 
 ## Configuration
 
