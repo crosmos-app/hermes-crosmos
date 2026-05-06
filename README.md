@@ -58,8 +58,8 @@ You should see `crosmos` listed as the active memory provider.
 
 ## How It Works
 
-- **Auto-recall** — relevant context is searched and injected, fenced in a `<crosmos-context>` block so the model treats it as background data, not user input
-- **Auto-ingest** — conversations are ingested into Crosmos for future recall (own context blocks are stripped to avoid feedback loops)
+- **Auto-recall** — relevant context is recalled and made available to the model
+- **Auto-ingest** — conversations are ingested into Crosmos for future recall
 - **Manual tools** — `crosmos_remember`, `crosmos_recall`, `crosmos_forget` available for explicit control
 
 No "remember this" or "search for X" needed. It just works.
